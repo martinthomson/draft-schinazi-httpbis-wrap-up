@@ -10,11 +10,11 @@ category: std
 wg: HTTPBIS
 area: "Web and Internet Transport"
 venue:
-  group: HTTP
-  type: Working Group
+  group: "HTTP"
+  type: "Working Group"
   home: https://httpwg.org/
-  mail: ietf-http-wg@w3.org
-  arch: https://lists.w3.org/Archives/Public/ietf-http-wg/
+  mail: "ietf-http-wg@w3.org"
+  arch: "https://lists.w3.org/Archives/Public/ietf-http-wg/"
   repo: https://github.com/DavidSchinazi/draft-schinazi-httpbis-wrap-up
 keyword:
   - secure
