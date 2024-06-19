@@ -16,6 +16,7 @@ venue:
   mail: "ietf-http-wg@w3.org"
   arch: "https://lists.w3.org/Archives/Public/ietf-http-wg/"
   repo: https://github.com/DavidSchinazi/draft-schinazi-httpbis-wrap-up
+  latest: https://davidschinazi.github.io/draft-schinazi-httpbis-wrap-up/#go.draft-schinazi-httpbis-wrap-up.html
 keyword:
   - secure
   - tunnels
