@@ -4,8 +4,8 @@
 
 HTTPBIS                                                      D. Schinazi
 Internet-Draft                                                Google LLC
-Intended status: Standards Track                            24 June 2024
-Expires: 26 December 2024
+Intended status: Standards Track                             3 July 2024
+Expires: 4 January 2025
 
 
                         The HTTP Wrap Up Capsule
@@ -16,18 +16,23 @@ Abstract
    HTTP intermediaries can provide a variety of benefits to HTTP
    systems, such as load balancing, caching, and privacy improvements.
    Deployments of intermediaries also need to be maintained, which can
-   sometimes require taking intermediaries temporarily offline.  In
-   order for this maintenance to avoid disrupting communications,
-   multiplexed versions of HTTP leverage the GOAWAY frame to instruct
-   clients to send future requests to a different intermediary without
-   impacting their active requests.  However, the GOAWAY frame is only
-   available when the intermediary operates inside the encryption that
-   protects HTTP: gateways can leverage it but CONNECT and connect-udp
-   proxies cannot, because they cannot observe or modify a tunneled HTTP
-   connection that flows through them to inject a GOAWAY frame.  This
-   document specifies a new "WRAP_UP" capsule that allows a proxy to
-   instruct a client that it should not start new requests on a tunneled
-   connection, while still allowing it to finish existing requests.
+   sometimes require taking intermediaries temporarily offline.
+   Additionally, sometimes intermediaries need to terminate long-lived
+   request streams in order to facilitate load balancing or impose data
+   limits.  However, Web browsers commonly cannot retry failed requests
+   when they cannot ascertain whether an in-progress request was acted
+   on.  To avoid user-visible failures, it is best for the intermediary
+   to inform the client of upcoming request stream terminations in
+   advance of the actual termination so that the client can wrap up
+   existing operations related to that stream and start sending new work
+   to a different stream or connection.  This happens more commonly when
+   the client uses two nested proxies to improve its privacy: the first
+   proxy then needs to be able to warn the client that it will
+   eventually need to close the long-lived tunnel to the second proxy.
+   This document specifies a new "WRAP_UP" capsule that allows a proxy
+   to instruct a client that it should not start new requests on a
+   tunneled connection, while still allowing it to finish existing
+   requests.
 
 About This Document
 
@@ -62,7 +67,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 26 December 2024.
+   This Internet-Draft will expire on 4 January 2025.
 
 Copyright Notice
 
@@ -100,14 +105,18 @@ Table of Contents
    of benefits to HTTP systems, such as load balancing, caching, and
    privacy improvements.  Deployments of intermediaries also need to be
    maintained, which can sometimes require taking intermediaries
-   temporarily offline.  In order for this maintenance to avoid
-   disrupting communications, multiplexed versions of HTTP leverage the
-   GOAWAY frame (see Section 5.2 of [HTTP/3] and Section 6.8 of
-   [HTTP/2]) to instruct clients to send future requests to a different
-   intermediary without impacting their active requests.  This works
-   well in situations where the gateway participates in both HTTP
-   connections; i.e., when the first connection is between the client
-   and gateway and the second is between the gateway and origin.
+   temporarily offline.  Additionally, sometimes intermediaries need to
+   terminate long-lived request streams in order to facilitate load
+   balancing or impose data limits.  However, Web browsers commonly
+   cannot retry failed requests when they cannot ascertain whether an
+   in-progress request was acted on.
+
+   When a long-lived HTTP connection to a gateway carries many short-
+   lived streams, it is currently possible to inform the client of an
+   upcoming graceful termination by leveraging the GOAWAY frame (see
+   Section 5.2 of [HTTP/3] and Section 6.8 of [HTTP/2]).  This instructs
+   the client to send future requests to a different intermediary
+   without impacting their active requests.
 
    +--------+      +---------+      +--------+
    | Client |      | Gateway |      | Origin |
@@ -123,17 +132,20 @@ Table of Contents
 
                        Figure 1: Gateway Sends GOAWAY
 
-   However, it doesn't when one connection is tunneled over the other;
-   i.e., when the first HTTP connection is between the client and proxy
-   and the second is between the client and origin.  This happens when
-   the client sends a CONNECT (see Section 9.3.6 of [HTTP]) or connect-
-   udp (see [CONNECT-UDP]) request to the proxy, and then uses the newly
+   However, GOAWAY is not well suited for cases where there is a single
+   long-lived request.  For example, this happens when the client sends
+   a CONNECT (see Section 9.3.6 of [HTTP]) or connect-udp (see
+   [CONNECT-UDP]) request to the proxy, and then uses the newly
    established tunnel as the underlying transport to then establish a
-   second HTTP connection directly to the origin.  When HTTPS is in use
-   on this second connection, the proxy does not have access to the
-   cryptographic secrets of the client-origin connection, and is
-   therefore unable to inject a GOAWAY frame.  The proxy therefore needs
-   a new mechanism to indicate graceful termination to the client.
+   second HTTP connection directly to the origin.  In that situation,
+   the proxy is unaware of the contents of the tunnel, and only sees a
+   single long-lived request.
+
+   To avoid user-visible failures, it is best for the proxy to inform
+   the client of upcoming request stream terminations in advance of the
+   actual termination so that the client can wrap up existing operations
+   related to that stream and start sending new work to a different
+   stream or connection.
 
    +--------+      +---------+      +--------+
    | Client |      |  Proxy  |      | Origin |
