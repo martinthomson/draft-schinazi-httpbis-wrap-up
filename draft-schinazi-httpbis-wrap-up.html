@@ -1292,8 +1292,11 @@ request. For example, this happens when the client sends a CONNECT (see
 <span><a href="https://rfc-editor.org/rfc/rfc9110#section-9.3.6" class="relref">Section 9.3.6</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>) or connect-udp (see <span>[<a href="#CONNECT-UDP" class="cite xref">CONNECT-UDP</a>]</span>)
 request to the proxy, and then uses the newly established tunnel as the
 underlying transport to then establish a second HTTP connection directly to the
-origin. In that situation, the proxy is unaware of the contents of the tunnel,
-and only sees a single long-lived request.<a href="#section-1-4" class="pilcrow">¶</a></p>
+origin. In that situation, the proxy cannot inspect the contents of the tunnel,
+nor inject any data into it; the proxy only sees a single long-lived request.
+The proxy is responsible for managing the lifetime of the tunnel, but can only
+terminate it abortively. Such abrupt termination can lead to truncated content,
+which the client cannot safely request again.<a href="#section-1-4" class="pilcrow">¶</a></p>
 <p id="section-1-5">To avoid user-visible failures, it is best for the proxy to inform the client
 of upcoming request stream terminations in advance of the actual termination so
 that the client can wrap up existing operations related to that stream and
@@ -1395,7 +1398,10 @@ Capsule Value.<a href="#section-2-1" class="pilcrow">¶</a></p>
 be due to maintenance of the proxy itself, load balancing, or applying data
 usage limits on a particular stream. When a proxy has advance notice that it
 will soon close a request stream, it <span class="bcp14">MAY</span> send a WRAP_UP capsule to share that
-information with the client.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+information with the client. This can also be used when the proxy wishes to
+release resources associated with a request stream, such as HTTP Datagrams (see
+<span><a href="https://rfc-editor.org/rfc/rfc9297#section-2" class="relref">Section 2</a> of [<a href="#HTTP-DGRAM" class="cite xref">HTTP-DGRAM</a>]</span>) or WebTransport streams (see
+<span>[<a href="#WEBTRANSPORT" class="cite xref">WEBTRANSPORT</a>]</span>).<a href="#section-2.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="client-handling">
@@ -1537,8 +1543,12 @@ requests were handled by the origin or not.<a href="#section-3-1" class="pilcrow
 <span class="refAuthor">Thomson, M., Ed.</span> and <span class="refAuthor">C. Benfield, Ed.</span>, <span class="refTitle">"HTTP/2"</span>, <span class="seriesInfo">RFC 9113</span>, <span class="seriesInfo">DOI 10.17487/RFC9113</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9113">https://www.rfc-editor.org/rfc/rfc9113</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="H3">[HTTP/3]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Bishop, M., Ed.</span>, <span class="refTitle">"HTTP/3"</span>, <span class="seriesInfo">RFC 9114</span>, <span class="seriesInfo">DOI 10.17487/RFC9114</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9114">https://www.rfc-editor.org/rfc/rfc9114</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WEBTRANSPORT">[WEBTRANSPORT]</dt>
+      <dd>
+<span class="refAuthor">Frindell, A.</span>, <span class="refAuthor">Kinnear, E.</span>, and <span class="refAuthor">V. Vasiliev</span>, <span class="refTitle">"WebTransport over HTTP/3"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-webtrans-http3-09</span>, <time datetime="2024-03-04" class="refDate">4 March 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-webtrans-http3-09">https://datatracker.ietf.org/doc/html/draft-ietf-webtrans-http3-09</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

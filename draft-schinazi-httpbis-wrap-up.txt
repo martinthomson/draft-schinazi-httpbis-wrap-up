@@ -138,8 +138,11 @@ Table of Contents
    [CONNECT-UDP]) request to the proxy, and then uses the newly
    established tunnel as the underlying transport to then establish a
    second HTTP connection directly to the origin.  In that situation,
-   the proxy is unaware of the contents of the tunnel, and only sees a
-   single long-lived request.
+   the proxy cannot inspect the contents of the tunnel, nor inject any
+   data into it; the proxy only sees a single long-lived request.  The
+   proxy is responsible for managing the lifetime of the tunnel, but can
+   only terminate it abortively.  Such abrupt termination can lead to
+   truncated content, which the client cannot safely request again.
 
    To avoid user-visible failures, it is best for the proxy to inform
    the client of upcoming request stream terminations in advance of the
@@ -194,6 +197,10 @@ Table of Contents
    or applying data usage limits on a particular stream.  When a proxy
    has advance notice that it will soon close a request stream, it MAY
    send a WRAP_UP capsule to share that information with the client.
+   This can also be used when the proxy wishes to release resources
+   associated with a request stream, such as HTTP Datagrams (see
+   Section 2 of [HTTP-DGRAM]) or WebTransport streams (see
+   [WEBTRANSPORT]).
 
 2.2.  Client Handling
 
@@ -285,6 +292,13 @@ Table of Contents
 
    [HTTP/3]   Bishop, M., Ed., "HTTP/3", RFC 9114, DOI 10.17487/RFC9114,
               June 2022, <https://www.rfc-editor.org/rfc/rfc9114>.
+
+   [WEBTRANSPORT]
+              Frindell, A., Kinnear, E., and V. Vasiliev, "WebTransport
+              over HTTP/3", Work in Progress, Internet-Draft, draft-
+              ietf-webtrans-http3-09, 4 March 2024,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-
+              webtrans-http3-09>.
 
 Acknowledgments
 
