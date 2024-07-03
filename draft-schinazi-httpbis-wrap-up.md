@@ -105,8 +105,11 @@ request. For example, this happens when the client sends a CONNECT (see
 {{Section 9.3.6 of HTTP}}) or connect-udp (see {{?CONNECT-UDP=RFC9298}})
 request to the proxy, and then uses the newly established tunnel as the
 underlying transport to then establish a second HTTP connection directly to the
-origin. In that situation, the proxy is unaware of the contents of the tunnel,
-and only sees a single long-lived request.
+origin. In that situation, the proxy cannot inspect the contents of the tunnel,
+nor inject any data into it; the proxy only sees a single long-lived request.
+The proxy is responsible for managing the lifetime of the tunnel, but can only
+terminate it abortively. Such abrupt termination can lead to truncated content,
+which the client cannot safely request again.
 
 To avoid user-visible failures, it is best for the proxy to inform the client
 of upcoming request stream terminations in advance of the actual termination so
@@ -156,7 +159,10 @@ Proxies often know in advance that they will close a request stream. This can
 be due to maintenance of the proxy itself, load balancing, or applying data
 usage limits on a particular stream. When a proxy has advance notice that it
 will soon close a request stream, it MAY send a WRAP_UP capsule to share that
-information with the client.
+information with the client. This can also be used when the proxy wishes to
+release resources associated with a request stream, such as HTTP Datagrams (see
+{{Section 2 of HTTP-DGRAM}}) or WebTransport streams (see
+{{?WEBTRANSPORT=I-D.ietf-webtrans-http3}}).
 
 ## Client Handling
 
