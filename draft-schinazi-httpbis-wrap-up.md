@@ -48,23 +48,16 @@ informative:
 
 --- abstract
 
-HTTP intermediaries can provide a variety of benefits to HTTP systems, such as
-load balancing, caching, and privacy improvements. Deployments of
-intermediaries also need to be maintained, which can sometimes require taking
-intermediaries temporarily offline. Additionally, sometimes intermediaries need
-to terminate long-lived request streams in order to facilitate load balancing
-or impose data limits. However, Web browsers commonly cannot retry failed
-requests when they cannot ascertain whether an in-progress request was acted
-on. To avoid user-visible failures, it is best for the intermediary to inform
-the client of upcoming request stream terminations in advance of the actual
-termination so that the client can wrap up existing operations related to that
-stream and start sending new work to a different stream or connection. This
-happens more commonly when the client uses two nested proxies to improve its
-privacy: the first proxy then needs to be able to warn the client that it will
-eventually need to close the long-lived tunnel to the second proxy. This
-document specifies a new "WRAP_UP" capsule that allows a proxy to instruct a
-client that it should not start new requests on a tunneled connection, while
-still allowing it to finish existing requests.
+HTTP intermediaries sometimes need to terminate long-lived request streams in
+order to facilitate load balancing or impose data limits. However, Web browsers
+commonly cannot retry failed proxied requests when they cannot ascertain
+whether an in-progress request was acted on. To avoid user-visible failures, it
+is best for the intermediary to inform the client of upcoming request stream
+terminations in advance of the actual termination so that the client can wrap
+up existing operations related to that stream and start sending new work to a
+different stream or connection. This document specifies a new "WRAP_UP" capsule
+that allows a proxy to instruct a client that it should not start new requests
+on a tunneled connection, while still allowing it to finish existing requests.
 
 --- middle
 
@@ -76,8 +69,8 @@ privacy improvements. Deployments of intermediaries also need to be maintained,
 which can sometimes require taking intermediaries temporarily offline.
 Additionally, sometimes intermediaries need to terminate long-lived request
 streams in order to facilitate load balancing or impose data limits. However,
-Web browsers commonly cannot retry failed requests when they cannot ascertain
-whether an in-progress request was acted on.
+Web browsers commonly cannot retry failed proxied requests when they cannot
+ascertain whether an in-progress request was acted on.
 
 When a long-lived HTTP connection to a gateway carries many short-lived
 streams, it is currently possible to inform the client of an upcoming graceful
