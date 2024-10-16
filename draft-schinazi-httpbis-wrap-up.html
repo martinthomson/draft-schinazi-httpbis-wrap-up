@@ -1483,10 +1483,9 @@ send the WRAP_UP capsule with a non-zero Capsule Length. If an endpoint
 receives a WRAP_UP capsule with a non-zero Capsule Length, it <span class="bcp14">MUST</span> abort the
 corresponding request stream. Proxies <span class="bcp14">MUST NOT</span> send more than one WRAP_UP
 capsule on a given stream. If a client receives a second WRAP_UP capsule on a
-given request stream, it <span class="bcp14">MUST</span> abort the stream.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
-<p id="section-2.3-2">Endpoints that abort the request stream due to an unexpected or malformed
-WRAP_UP capsule received over HTTP/3 <span class="bcp14">SHOULD</span> use the H3_DATAGRAM_ERROR error
-code when aborting the stream.<a href="#section-2.3-2" class="pilcrow">¶</a></p>
+given request stream, it <span class="bcp14">MUST</span> abort the stream. Endpoints that abort the
+request stream due to an unexpected or malformed WRAP_UP capsule <span class="bcp14">MUST</span> follow
+the error-handling procedure defined in <span><a href="https://rfc-editor.org/rfc/rfc9297#section-3.3" class="relref">Section 3.3</a> of [<a href="#HTTP-DGRAM" class="cite xref">HTTP-DGRAM</a>]</span>.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
