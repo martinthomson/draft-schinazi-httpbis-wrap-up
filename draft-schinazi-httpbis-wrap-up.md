@@ -33,6 +33,10 @@ author:
     code: 94043
     country: United States of America
     email: dschinazi.ietf@gmail.com
+  -
+    fullname: "Lucas Pardue"
+    organization: Cloudflare
+    email: "lucas@lucaspardue.com"
 
 
 normative:
