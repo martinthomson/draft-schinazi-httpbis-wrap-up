@@ -1152,10 +1152,16 @@ on a tunneled connection, while still allowing it to finish existing requests.<a
         </h2>
 <nav class="toc"><ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
-            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+            <p id="section-toc.1-1.1.1"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
-                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-the-need-for-a-request-term" class="internal xref">The Need for a Request Termination Intent Signal</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-the-wrap_up-capsule" class="internal xref">The WRAP_UP Capsule</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.3">
+                <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
 </li>
             </ul>
 </li>
@@ -1163,7 +1169,7 @@ on a tunneled connection, while still allowing it to finish existing requests.<a
             <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-mechanism" class="internal xref">Mechanism</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
-                <p id="section-toc.1-1.2.2.1.1" class="keepWithNext"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-proxy-behavior" class="internal xref">Proxy Behavior</a></p>
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-proxy-behavior" class="internal xref">Proxy Behavior</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
                 <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-client-handling" class="internal xref">Client Handling</a></p>
@@ -1205,168 +1211,226 @@ on a tunneled connection, while still allowing it to finish existing requests.<a
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">HTTP intermediaries (see <span><a href="https://rfc-editor.org/rfc/rfc9110#section-3.7" class="relref">Section 3.7</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>) can provide a
-variety of benefits to HTTP systems, such as load balancing, caching, and
-privacy improvements. Deployments of intermediaries also need to be maintained,
-which can sometimes require taking intermediaries temporarily offline.
-Additionally, sometimes intermediaries need to terminate long-lived request
-streams in order to facilitate load balancing or impose data limits. However,
-Web browsers commonly cannot retry failed proxied requests when they cannot
-ascertain whether an in-progress request was acted on.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">When a long-lived HTTP connection to a gateway carries many short-lived
-streams, it is currently possible to inform the client of an upcoming graceful
-termination by leveraging the GOAWAY frame (see <span><a href="https://rfc-editor.org/rfc/rfc9114#section-5.2" class="relref">Section 5.2</a> of [<a href="#H3" class="cite xref">HTTP/3</a>]</span> and
-<span><a href="https://rfc-editor.org/rfc/rfc9113#section-6.8" class="relref">Section 6.8</a> of [<a href="#H2" class="cite xref">HTTP/2</a>]</span>). This instructs the client to send future requests to a
-different intermediary without impacting their active requests.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-1"><span>[<a href="#H1" class="cite xref">HTTP/1.1</a>]</span>, <span>[<a href="#H2" class="cite xref">HTTP/2</a>]</span> and <span>[<a href="#H3" class="cite xref">HTTP/3</a>]</span> all have the notion of persistent connections, where a
+single connection can carry multiple request and response messages.
+While it is expected that the connection persists, there are situations where
+a client or server may wish to terminate the connection gracefully.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">An HTTP/1.1 connection can be terminated by using a Connection header field with
+the close option; see <span><a href="https://rfc-editor.org/rfc/rfc9112#section-9.6" class="relref">Section 9.6</a> of [<a href="#H1" class="cite xref">HTTP/1.1</a>]</span>. When a connection has short-lived
+requests/responses, this mechanism allows timely and non-disruptive connection
+termination. However, when requests/responses are longer lived, the opportunity
+to use headers happens less frequently (or not at all). There is no way for
+client or server to signal a future intent to terminate the connection. Instead,
+an abrupt termination, realized via a transport-layer close or reset, is
+required, which is potentially disruptive and can lead to truncated content.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">HTTP/2 and HTTP/3 support request multiplexing, making header-based connection
+lifecycle control impractical. Connection headers are prohibited entirely.
+Instead, a shutdown process using the GOAWAY frame is defined (see <span><a href="https://rfc-editor.org/rfc/rfc9113#section-6.8" class="relref">Section 6.8</a> of [<a href="#H2" class="cite xref">HTTP/2</a>]</span> and <span><a href="https://rfc-editor.org/rfc/rfc9114#section-5.2" class="relref">Section 5.2</a> of [<a href="#H3" class="cite xref">HTTP/3</a>]</span>). GOAWAY signals a future intent to terminate
+the connection, supporting cases such as scheduled maintenance. Active
+requests/responses can continue to run, while new requests need to be sent on a
+new HTTP connection. Endpoints that use GOAWAY typically have a grace period in
+which requests/responses can run naturally to completion. If they run longer
+than the grace period, they are abruptly terminated when the the transport layer
+is closed or reset, which is potentially disruptive and can lead to truncated
+content.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<div id="the-need-for-a-request-termination-intent-signal">
+<section id="section-1.1">
+        <h3 id="name-the-need-for-a-request-term">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-the-need-for-a-request-term" class="section-name selfRef">The Need for a Request Termination Intent Signal</a>
+        </h3>
+<p id="section-1.1-1">Intermediaries (see <span><a href="https://rfc-editor.org/rfc/rfc9110#section-3.7" class="relref">Section 3.7</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>) can provide a variety of
+benefits to HTTP systems, such as load balancing, caching, and privacy
+improvements. Deployments of intermediaries also need to be maintained, which
+can sometimes require taking intermediaries temporarily offline. For example, if
+a gateway has a client HTTP/2 connection and needs to go down for maintenance,
+it can send a GOAWAY to stop the client issuing requests that would be forward
+to the origin.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <span id="name-gateway-sends-goaway"></span><div id="diagram-gateway">
 <figure id="figure-1">
-        <div id="section-1-3.1">
-          <div class="alignLeft art-svg artwork" id="section-1-3.1.1">
+          <div id="section-1.1-2.1">
+            <div class="alignLeft art-svg artwork" id="section-1.1-2.1.1">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="208" width="352" viewBox="0 0 352 208" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
-              <path d="M 8,32 L 8,160" fill="none" stroke="black"></path>
-              <path d="M 80,32 L 80,80" fill="none" stroke="black"></path>
-              <path d="M 80,144 L 80,160" fill="none" stroke="black"></path>
-              <path d="M 104,160 L 104,176" fill="none" stroke="black"></path>
-              <path d="M 136,32 L 136,80" fill="none" stroke="black"></path>
-              <path d="M 136,144 L 136,160" fill="none" stroke="black"></path>
-              <path d="M 200,64 L 200,96" fill="none" stroke="black"></path>
-              <path d="M 216,32 L 216,80" fill="none" stroke="black"></path>
-              <path d="M 216,144 L 216,160" fill="none" stroke="black"></path>
-              <path d="M 248,160 L 248,176" fill="none" stroke="black"></path>
-              <path d="M 272,32 L 272,80" fill="none" stroke="black"></path>
-              <path d="M 272,144 L 272,160" fill="none" stroke="black"></path>
-              <path d="M 328,64 L 328,128" fill="none" stroke="black"></path>
-              <path d="M 344,32 L 344,160" fill="none" stroke="black"></path>
-              <path d="M 8,32 L 80,32" fill="none" stroke="black"></path>
-              <path d="M 136,32 L 216,32" fill="none" stroke="black"></path>
-              <path d="M 272,32 L 344,32" fill="none" stroke="black"></path>
-              <path d="M 80,78 L 136,78" fill="none" stroke="black"></path>
-              <path d="M 80,82 L 136,82" fill="none" stroke="black"></path>
-              <path d="M 216,80 Q 218,76.8 220,80 Q 222,83.2 224,80 Q 226,76.8 228,80 Q 230,83.2 232,80 Q 234,76.8 236,80 Q 238,83.2 240,80 Q 242,76.8 244,80 Q 246,83.2 248,80 Q 250,76.8 252,80 Q 254,83.2 256,80 Q 258,76.8 260,80 Q 262,83.2 264,80 Q 266,76.8 268,80 Q 270,83.2 272,80" fill="none" stroke="black"></path>
-              <path d="M 64,96 L 200,96" fill="none" stroke="black"></path>
-              <path d="M 64,128 L 328,128" fill="none" stroke="black"></path>
-              <path d="M 80,142 L 136,142" fill="none" stroke="black"></path>
-              <path d="M 80,146 L 136,146" fill="none" stroke="black"></path>
-              <path d="M 216,144 Q 218,140.8 220,144 Q 222,147.2 224,144 Q 226,140.8 228,144 Q 230,147.2 232,144 Q 234,140.8 236,144 Q 238,147.2 240,144 Q 242,140.8 244,144 Q 246,147.2 248,144 Q 250,140.8 252,144 Q 254,147.2 256,144 Q 258,140.8 260,144 Q 262,147.2 264,144 Q 266,140.8 268,144 Q 270,147.2 272,144" fill="none" stroke="black"></path>
-              <path d="M 8,160 L 80,160" fill="none" stroke="black"></path>
-              <path d="M 136,160 L 216,160" fill="none" stroke="black"></path>
-              <path d="M 272,160 L 344,160" fill="none" stroke="black"></path>
-              <path d="M 80,192 L 88,192" fill="none" stroke="black"></path>
-              <path d="M 264,192 L 272,192" fill="none" stroke="black"></path>
-              <path d="M 88,192 C 96.83064,192 104,184.83064 104,176" fill="none" stroke="black"></path>
-              <path d="M 264,192 C 255.16936,192 248,184.83064 248,176" fill="none" stroke="black"></path>
-              <polygon class="arrowhead" points="256,160 244,154.4 244,165.6" fill="black" transform="rotate(270,248,160)"></polygon>
-              <polygon class="arrowhead" points="112,160 100,154.4 100,165.6" fill="black" transform="rotate(270,104,160)"></polygon>
-              <polygon class="arrowhead" points="72,128 60,122.4 60,133.6" fill="black" transform="rotate(180,64,128)"></polygon>
-              <polygon class="arrowhead" points="72,96 60,90.4 60,101.6" fill="black" transform="rotate(180,64,96)"></polygon>
-              <circle cx="200" cy="64" r="6" class="closeddot" fill="black"></circle>
-              <circle cx="328" cy="64" r="6" class="closeddot" fill="black"></circle>
-              <g class="text">
-                <text x="44" y="52">Client</text>
-                <text x="176" y="52">Gateway</text>
-                <text x="308" y="52">Origin</text>
-                <text x="172" y="84">GOAWAY</text>
-                <text x="228" y="116">HTTP</text>
-                <text x="288" y="116">Responses</text>
-                <text x="56" y="196">TLS</text>
-                <text x="296" y="196">TLS</text>
-              </g>
-            </svg><a href="#section-1-3.1.1" class="pilcrow">¶</a>
+                <path d="M 8,32 L 8,160" fill="none" stroke="black"></path>
+                <path d="M 80,32 L 80,80" fill="none" stroke="black"></path>
+                <path d="M 80,144 L 80,160" fill="none" stroke="black"></path>
+                <path d="M 104,160 L 104,176" fill="none" stroke="black"></path>
+                <path d="M 136,32 L 136,80" fill="none" stroke="black"></path>
+                <path d="M 136,144 L 136,160" fill="none" stroke="black"></path>
+                <path d="M 200,64 L 200,96" fill="none" stroke="black"></path>
+                <path d="M 216,32 L 216,80" fill="none" stroke="black"></path>
+                <path d="M 216,144 L 216,160" fill="none" stroke="black"></path>
+                <path d="M 248,160 L 248,176" fill="none" stroke="black"></path>
+                <path d="M 272,32 L 272,80" fill="none" stroke="black"></path>
+                <path d="M 272,144 L 272,160" fill="none" stroke="black"></path>
+                <path d="M 328,64 L 328,128" fill="none" stroke="black"></path>
+                <path d="M 344,32 L 344,160" fill="none" stroke="black"></path>
+                <path d="M 8,32 L 80,32" fill="none" stroke="black"></path>
+                <path d="M 136,32 L 216,32" fill="none" stroke="black"></path>
+                <path d="M 272,32 L 344,32" fill="none" stroke="black"></path>
+                <path d="M 80,78 L 136,78" fill="none" stroke="black"></path>
+                <path d="M 80,82 L 136,82" fill="none" stroke="black"></path>
+                <path d="M 216,80 Q 218,76.8 220,80 Q 222,83.2 224,80 Q 226,76.8 228,80 Q 230,83.2 232,80 Q 234,76.8 236,80 Q 238,83.2 240,80 Q 242,76.8 244,80 Q 246,83.2 248,80 Q 250,76.8 252,80 Q 254,83.2 256,80 Q 258,76.8 260,80 Q 262,83.2 264,80 Q 266,76.8 268,80 Q 270,83.2 272,80" fill="none" stroke="black"></path>
+                <path d="M 64,96 L 200,96" fill="none" stroke="black"></path>
+                <path d="M 64,128 L 328,128" fill="none" stroke="black"></path>
+                <path d="M 80,142 L 136,142" fill="none" stroke="black"></path>
+                <path d="M 80,146 L 136,146" fill="none" stroke="black"></path>
+                <path d="M 216,144 Q 218,140.8 220,144 Q 222,147.2 224,144 Q 226,140.8 228,144 Q 230,147.2 232,144 Q 234,140.8 236,144 Q 238,147.2 240,144 Q 242,140.8 244,144 Q 246,147.2 248,144 Q 250,140.8 252,144 Q 254,147.2 256,144 Q 258,140.8 260,144 Q 262,147.2 264,144 Q 266,140.8 268,144 Q 270,147.2 272,144" fill="none" stroke="black"></path>
+                <path d="M 8,160 L 80,160" fill="none" stroke="black"></path>
+                <path d="M 136,160 L 216,160" fill="none" stroke="black"></path>
+                <path d="M 272,160 L 344,160" fill="none" stroke="black"></path>
+                <path d="M 80,192 L 88,192" fill="none" stroke="black"></path>
+                <path d="M 264,192 L 272,192" fill="none" stroke="black"></path>
+                <path d="M 88,192 C 96.83064,192 104,184.83064 104,176" fill="none" stroke="black"></path>
+                <path d="M 264,192 C 255.16936,192 248,184.83064 248,176" fill="none" stroke="black"></path>
+                <polygon class="arrowhead" points="256,160 244,154.4 244,165.6" fill="black" transform="rotate(270,248,160)"></polygon>
+                <polygon class="arrowhead" points="112,160 100,154.4 100,165.6" fill="black" transform="rotate(270,104,160)"></polygon>
+                <polygon class="arrowhead" points="72,128 60,122.4 60,133.6" fill="black" transform="rotate(180,64,128)"></polygon>
+                <polygon class="arrowhead" points="72,96 60,90.4 60,101.6" fill="black" transform="rotate(180,64,96)"></polygon>
+                <circle cx="200" cy="64" r="6" class="closeddot" fill="black"></circle>
+                <circle cx="328" cy="64" r="6" class="closeddot" fill="black"></circle>
+                <g class="text">
+                  <text x="44" y="52">Client</text>
+                  <text x="176" y="52">Gateway</text>
+                  <text x="308" y="52">Origin</text>
+                  <text x="172" y="84">GOAWAY</text>
+                  <text x="228" y="116">HTTP</text>
+                  <text x="288" y="116">Responses</text>
+                  <text x="56" y="196">TLS</text>
+                  <text x="296" y="196">TLS</text>
+                </g>
+              </svg><a href="#section-1.1-2.1.1" class="pilcrow">¶</a>
 </div>
 </div>
 <figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
 <a href="#name-gateway-sends-goaway" class="selfRef">Gateway Sends GOAWAY</a>
-        </figcaption></figure>
+          </figcaption></figure>
 </div>
-<p id="section-1-4">However, GOAWAY is not well suited for cases where there is a single long-lived
-request. For example, this happens when the client sends a CONNECT (see
-<span><a href="https://rfc-editor.org/rfc/rfc9110#section-9.3.6" class="relref">Section 9.3.6</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>) or connect-udp (see <span>[<a href="#CONNECT-UDP" class="cite xref">CONNECT-UDP</a>]</span>)
-request to the proxy, and then uses the newly established tunnel as the
-underlying transport to then establish a second HTTP connection directly to the
-origin. In that situation, the proxy cannot inspect the contents of the tunnel,
-nor inject any data into it; the proxy only sees a single long-lived request.
-The proxy is responsible for managing the lifetime of the tunnel, but can only
-terminate it abortively. Such abrupt termination can lead to truncated content,
-which the client cannot safely request again.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5">To avoid user-visible failures, it is best for the proxy to inform the client
-of upcoming request stream terminations in advance of the actual termination so
-that the client can wrap up existing operations related to that stream and
-start sending new work to a different stream or connection.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">The connection close details described above apply to an intermediary's upstream
+and downstream connections. Since a proxy can do request aggregation or fan out,
+there is no guarantee of a 1:1 ratio of upstream/downstream. As such, the
+lifetimes of these connections are not coupled tightly. For example, a gateway
+can terminate a client HTTP/2 connections and map individual requests to an
+origin HTTP/1.1 connection pool. If any single origin connection indicates an
+intent to close, it doesn't make sense for the gateway to issue a GOAWAY to the
+client, or to respond to a client GOAWAY by closing connections in the pool.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-4">Long-lived requests pose a problem for maintenance, especially for HTTP/2 and
+HTTP/3, and even more so for intermediaries. Sometimes they need to terminate
+individual request streams in order to facilitate load balancing or impose data
+limits, while leaving the connection still active. GOAWAY is not suitable for
+this task.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
+<p id="section-1.1-5">Some applications using HTTP have their own control plane running over HTTP,
+that could be used for a graceful termination. For example, WebSockets has
+separate control and data frames. The Close frame (<span><a href="https://rfc-editor.org/rfc/rfc6455#section-5.5.1" class="relref">Section 5.5.1</a> of [<a href="#WEBSOCKET" class="cite xref">WEBSOCKET</a>]</span>)
+is used for the WebSocket close sequence. However, in the maintenance scenario,
+an intermediary that is not WebSocket aware cannot use the formal sequence. Nor
+is there any standard for it to signal to the endpoints to initiate that
+sequence. Some intermediaries are WebSocket aware, and in theory could send
+Close frames. However, there can be other considerations that prevent this
+working effectively in real deployments, since the intermediary is a generic
+proxy that may invalidate endpoint expectations.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
+<p id="section-1.1-6">Many long-lived HTTP request types do not have control messages that could
+signal an intent to terminate the request. For example, see CONNECT (<span><a href="https://rfc-editor.org/rfc/rfc9110#section-9.3.6" class="relref">Section 9.3.6</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>) or connect-udp ({?CONNECT-UDP=RFC9298}}). In these models,
+the client requests that a proxy create a tunnel to a target origin. On success,
+the newly established tunnel is used as the underlying transport to then
+establish a second HTTP connection directly to the origin. In that situation,
+the proxy cannot inspect the contents of the tunnel, nor inject any data into
+it; the proxy only sees a single long-lived request. The proxy is responsible
+for managing the lifetime of the tunnel, but can only terminate it abortively.
+Such abrupt termination can lead to truncated content, which the client cannot
+safely request again. This is especially disruptive if the tunnelled HTTP
+connection has many active requests. Web browsers, for example, commonly cannot
+retry failed proxied requests when they cannot ascertain whether an in-progress
+request was acted on.<a href="#section-1.1-6" class="pilcrow">¶</a></p>
+<p id="section-1.1-7">To avoid user-visible failures, it is best for the proxy to inform the client
+of upcoming request stream terminations in advance of the actual termination.
+This allows the client to wrap up existing operations related to that stream and
+start sending new work to a different stream or connection.<a href="#section-1.1-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="the-wrapup-capsule">
+<section id="section-1.2">
+        <h3 id="name-the-wrap_up-capsule">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-the-wrap_up-capsule" class="section-name selfRef">The WRAP_UP Capsule</a>
+        </h3>
 <span id="name-proxy-sends-wrap_up"></span><div id="diagram-proxy">
 <figure id="figure-2">
-        <div id="section-1-6.1">
-          <div class="alignLeft art-svg artwork" id="section-1-6.1.1">
+          <div id="section-1.2-1.1">
+            <div class="alignLeft art-svg artwork" id="section-1.2-1.1.1">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="240" width="352" viewBox="0 0 352 240" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
-              <path d="M 8,32 L 8,192" fill="none" stroke="black"></path>
-              <path d="M 80,32 L 80,80" fill="none" stroke="black"></path>
-              <path d="M 80,160 L 80,192" fill="none" stroke="black"></path>
-              <path d="M 104,192 L 104,208" fill="none" stroke="black"></path>
-              <path d="M 136,32 L 136,80" fill="none" stroke="black"></path>
-              <path d="M 136,160 L 136,192" fill="none" stroke="black"></path>
-              <path d="M 200,64 L 200,96" fill="none" stroke="black"></path>
-              <path d="M 216,32 L 216,112" fill="none" stroke="black"></path>
-              <path d="M 216,160 L 216,192" fill="none" stroke="black"></path>
-              <path d="M 248,176 L 248,208" fill="none" stroke="black"></path>
-              <path d="M 272,32 L 272,112" fill="none" stroke="black"></path>
-              <path d="M 272,160 L 272,192" fill="none" stroke="black"></path>
-              <path d="M 328,64 L 328,144" fill="none" stroke="black"></path>
-              <path d="M 344,32 L 344,192" fill="none" stroke="black"></path>
-              <path d="M 8,32 L 80,32" fill="none" stroke="black"></path>
-              <path d="M 136,32 L 216,32" fill="none" stroke="black"></path>
-              <path d="M 272,32 L 344,32" fill="none" stroke="black"></path>
-              <path d="M 80,78 L 136,78" fill="none" stroke="black"></path>
-              <path d="M 80,82 L 136,82" fill="none" stroke="black"></path>
-              <path d="M 64,96 L 200,96" fill="none" stroke="black"></path>
-              <path d="M 80,112 Q 82,108.8 84,112 Q 86,115.2 88,112 Q 90,108.8 92,112 Q 94,115.2 96,112 Q 98,108.8 100,112 Q 102,115.2 104,112 Q 106,108.8 108,112 Q 110,115.2 112,112 Q 114,108.8 116,112 Q 118,115.2 120,112 Q 122,108.8 124,112 Q 126,115.2 128,112 Q 130,108.8 132,112 Q 134,115.2 136,112 Q 138,108.8 140,112 Q 142,115.2 144,112 Q 146,108.8 148,112 Q 150,115.2 152,112 Q 154,108.8 156,112 Q 158,115.2 160,112 Q 162,108.8 164,112 Q 166,115.2 168,112 Q 170,108.8 172,112 Q 174,115.2 176,112 Q 178,108.8 180,112 Q 182,115.2 184,112 Q 186,108.8 188,112 Q 190,115.2 192,112 Q 194,108.8 196,112 Q 198,115.2 200,112 Q 202,108.8 204,112 Q 206,115.2 208,112 Q 210,108.8 212,112 Q 214,115.2 216,112 Q 218,108.8 220,112 Q 222,115.2 224,112 Q 226,108.8 228,112 Q 230,115.2 232,112 Q 234,108.8 236,112 Q 238,115.2 240,112 Q 242,108.8 244,112 Q 246,115.2 248,112 Q 250,108.8 252,112 Q 254,115.2 256,112 Q 258,108.8 260,112 Q 262,115.2 264,112 Q 266,108.8 268,112 Q 270,115.2 272,112" fill="none" stroke="black"></path>
-              <path d="M 64,144 L 328,144" fill="none" stroke="black"></path>
-              <path d="M 80,160 Q 82,156.8 84,160 Q 86,163.2 88,160 Q 90,156.8 92,160 Q 94,163.2 96,160 Q 98,156.8 100,160 Q 102,163.2 104,160 Q 106,156.8 108,160 Q 110,163.2 112,160 Q 114,156.8 116,160 Q 118,163.2 120,160 Q 122,156.8 124,160 Q 126,163.2 128,160 Q 130,156.8 132,160 Q 134,163.2 136,160 Q 138,156.8 140,160 Q 142,163.2 144,160 Q 146,156.8 148,160 Q 150,163.2 152,160 Q 154,156.8 156,160 Q 158,163.2 160,160 Q 162,156.8 164,160 Q 166,163.2 168,160 Q 170,156.8 172,160 Q 174,163.2 176,160 Q 178,156.8 180,160 Q 182,163.2 184,160 Q 186,156.8 188,160 Q 190,163.2 192,160 Q 194,156.8 196,160 Q 198,163.2 200,160 Q 202,156.8 204,160 Q 206,163.2 208,160 Q 210,156.8 212,160 Q 214,163.2 216,160 Q 218,156.8 220,160 Q 222,163.2 224,160 Q 226,156.8 228,160 Q 230,163.2 232,160 Q 234,156.8 236,160 Q 238,163.2 240,160 Q 242,156.8 244,160 Q 246,163.2 248,160 Q 250,156.8 252,160 Q 254,163.2 256,160 Q 258,156.8 260,160 Q 262,163.2 264,160 Q 266,156.8 268,160 Q 270,163.2 272,160" fill="none" stroke="black"></path>
-              <path d="M 80,174 L 136,174" fill="none" stroke="black"></path>
-              <path d="M 80,178 L 136,178" fill="none" stroke="black"></path>
-              <path d="M 8,192 L 80,192" fill="none" stroke="black"></path>
-              <path d="M 136,192 L 216,192" fill="none" stroke="black"></path>
-              <path d="M 272,192 L 344,192" fill="none" stroke="black"></path>
-              <path d="M 80,224 L 88,224" fill="none" stroke="black"></path>
-              <path d="M 264,224 L 272,224" fill="none" stroke="black"></path>
-              <path d="M 88,224 C 96.83064,224 104,216.83064 104,208" fill="none" stroke="black"></path>
-              <path d="M 264,224 C 255.16936,224 248,216.83064 248,208" fill="none" stroke="black"></path>
-              <polygon class="arrowhead" points="256,176 244,170.4 244,181.6" fill="black" transform="rotate(270,248,176)"></polygon>
-              <polygon class="arrowhead" points="112,192 100,186.4 100,197.6" fill="black" transform="rotate(270,104,192)"></polygon>
-              <polygon class="arrowhead" points="72,144 60,138.4 60,149.6" fill="black" transform="rotate(180,64,144)"></polygon>
-              <polygon class="arrowhead" points="72,96 60,90.4 60,101.6" fill="black" transform="rotate(180,64,96)"></polygon>
-              <circle cx="200" cy="64" r="6" class="closeddot" fill="black"></circle>
-              <circle cx="328" cy="64" r="6" class="closeddot" fill="black"></circle>
-              <g class="text">
-                <text x="44" y="52">Client</text>
-                <text x="176" y="52">Proxy</text>
-                <text x="308" y="52">Origin</text>
-                <text x="168" y="84">WRAP_UP</text>
-                <text x="228" y="132">HTTP</text>
-                <text x="288" y="132">Responses</text>
-                <text x="56" y="228">TLS</text>
-                <text x="296" y="228">TLS</text>
-              </g>
-            </svg><a href="#section-1-6.1.1" class="pilcrow">¶</a>
+                <path d="M 8,32 L 8,192" fill="none" stroke="black"></path>
+                <path d="M 80,32 L 80,80" fill="none" stroke="black"></path>
+                <path d="M 80,160 L 80,192" fill="none" stroke="black"></path>
+                <path d="M 104,192 L 104,208" fill="none" stroke="black"></path>
+                <path d="M 136,32 L 136,80" fill="none" stroke="black"></path>
+                <path d="M 136,160 L 136,192" fill="none" stroke="black"></path>
+                <path d="M 200,64 L 200,96" fill="none" stroke="black"></path>
+                <path d="M 216,32 L 216,112" fill="none" stroke="black"></path>
+                <path d="M 216,160 L 216,192" fill="none" stroke="black"></path>
+                <path d="M 248,176 L 248,208" fill="none" stroke="black"></path>
+                <path d="M 272,32 L 272,112" fill="none" stroke="black"></path>
+                <path d="M 272,160 L 272,192" fill="none" stroke="black"></path>
+                <path d="M 328,64 L 328,144" fill="none" stroke="black"></path>
+                <path d="M 344,32 L 344,192" fill="none" stroke="black"></path>
+                <path d="M 8,32 L 80,32" fill="none" stroke="black"></path>
+                <path d="M 136,32 L 216,32" fill="none" stroke="black"></path>
+                <path d="M 272,32 L 344,32" fill="none" stroke="black"></path>
+                <path d="M 80,78 L 136,78" fill="none" stroke="black"></path>
+                <path d="M 80,82 L 136,82" fill="none" stroke="black"></path>
+                <path d="M 64,96 L 200,96" fill="none" stroke="black"></path>
+                <path d="M 80,112 Q 82,108.8 84,112 Q 86,115.2 88,112 Q 90,108.8 92,112 Q 94,115.2 96,112 Q 98,108.8 100,112 Q 102,115.2 104,112 Q 106,108.8 108,112 Q 110,115.2 112,112 Q 114,108.8 116,112 Q 118,115.2 120,112 Q 122,108.8 124,112 Q 126,115.2 128,112 Q 130,108.8 132,112 Q 134,115.2 136,112 Q 138,108.8 140,112 Q 142,115.2 144,112 Q 146,108.8 148,112 Q 150,115.2 152,112 Q 154,108.8 156,112 Q 158,115.2 160,112 Q 162,108.8 164,112 Q 166,115.2 168,112 Q 170,108.8 172,112 Q 174,115.2 176,112 Q 178,108.8 180,112 Q 182,115.2 184,112 Q 186,108.8 188,112 Q 190,115.2 192,112 Q 194,108.8 196,112 Q 198,115.2 200,112 Q 202,108.8 204,112 Q 206,115.2 208,112 Q 210,108.8 212,112 Q 214,115.2 216,112 Q 218,108.8 220,112 Q 222,115.2 224,112 Q 226,108.8 228,112 Q 230,115.2 232,112 Q 234,108.8 236,112 Q 238,115.2 240,112 Q 242,108.8 244,112 Q 246,115.2 248,112 Q 250,108.8 252,112 Q 254,115.2 256,112 Q 258,108.8 260,112 Q 262,115.2 264,112 Q 266,108.8 268,112 Q 270,115.2 272,112" fill="none" stroke="black"></path>
+                <path d="M 64,144 L 328,144" fill="none" stroke="black"></path>
+                <path d="M 80,160 Q 82,156.8 84,160 Q 86,163.2 88,160 Q 90,156.8 92,160 Q 94,163.2 96,160 Q 98,156.8 100,160 Q 102,163.2 104,160 Q 106,156.8 108,160 Q 110,163.2 112,160 Q 114,156.8 116,160 Q 118,163.2 120,160 Q 122,156.8 124,160 Q 126,163.2 128,160 Q 130,156.8 132,160 Q 134,163.2 136,160 Q 138,156.8 140,160 Q 142,163.2 144,160 Q 146,156.8 148,160 Q 150,163.2 152,160 Q 154,156.8 156,160 Q 158,163.2 160,160 Q 162,156.8 164,160 Q 166,163.2 168,160 Q 170,156.8 172,160 Q 174,163.2 176,160 Q 178,156.8 180,160 Q 182,163.2 184,160 Q 186,156.8 188,160 Q 190,163.2 192,160 Q 194,156.8 196,160 Q 198,163.2 200,160 Q 202,156.8 204,160 Q 206,163.2 208,160 Q 210,156.8 212,160 Q 214,163.2 216,160 Q 218,156.8 220,160 Q 222,163.2 224,160 Q 226,156.8 228,160 Q 230,163.2 232,160 Q 234,156.8 236,160 Q 238,163.2 240,160 Q 242,156.8 244,160 Q 246,163.2 248,160 Q 250,156.8 252,160 Q 254,163.2 256,160 Q 258,156.8 260,160 Q 262,163.2 264,160 Q 266,156.8 268,160 Q 270,163.2 272,160" fill="none" stroke="black"></path>
+                <path d="M 80,174 L 136,174" fill="none" stroke="black"></path>
+                <path d="M 80,178 L 136,178" fill="none" stroke="black"></path>
+                <path d="M 8,192 L 80,192" fill="none" stroke="black"></path>
+                <path d="M 136,192 L 216,192" fill="none" stroke="black"></path>
+                <path d="M 272,192 L 344,192" fill="none" stroke="black"></path>
+                <path d="M 80,224 L 88,224" fill="none" stroke="black"></path>
+                <path d="M 264,224 L 272,224" fill="none" stroke="black"></path>
+                <path d="M 88,224 C 96.83064,224 104,216.83064 104,208" fill="none" stroke="black"></path>
+                <path d="M 264,224 C 255.16936,224 248,216.83064 248,208" fill="none" stroke="black"></path>
+                <polygon class="arrowhead" points="256,176 244,170.4 244,181.6" fill="black" transform="rotate(270,248,176)"></polygon>
+                <polygon class="arrowhead" points="112,192 100,186.4 100,197.6" fill="black" transform="rotate(270,104,192)"></polygon>
+                <polygon class="arrowhead" points="72,144 60,138.4 60,149.6" fill="black" transform="rotate(180,64,144)"></polygon>
+                <polygon class="arrowhead" points="72,96 60,90.4 60,101.6" fill="black" transform="rotate(180,64,96)"></polygon>
+                <circle cx="200" cy="64" r="6" class="closeddot" fill="black"></circle>
+                <circle cx="328" cy="64" r="6" class="closeddot" fill="black"></circle>
+                <g class="text">
+                  <text x="44" y="52">Client</text>
+                  <text x="176" y="52">Proxy</text>
+                  <text x="308" y="52">Origin</text>
+                  <text x="168" y="84">WRAP_UP</text>
+                  <text x="228" y="132">HTTP</text>
+                  <text x="288" y="132">Responses</text>
+                  <text x="56" y="228">TLS</text>
+                  <text x="296" y="228">TLS</text>
+                </g>
+              </svg><a href="#section-1.2-1.1.1" class="pilcrow">¶</a>
 </div>
 </div>
 <figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
 <a href="#name-proxy-sends-wrap_up" class="selfRef">Proxy Sends WRAP_UP</a>
-        </figcaption></figure>
+          </figcaption></figure>
 </div>
-<p id="section-1-7">This document specifies a new "WRAP_UP" capsule (see <span><a href="https://rfc-editor.org/rfc/rfc9297#section-3" class="relref">Section 3</a> of [<a href="#HTTP-DGRAM" class="cite xref">HTTP-DGRAM</a>]</span>) that allows a proxy to instruct a client that it should
+<p id="section-1.2-2">This document specifies a new "WRAP_UP" capsule (see <span><a href="https://rfc-editor.org/rfc/rfc9297#section-3" class="relref">Section 3</a> of [<a href="#HTTP-DGRAM" class="cite xref">HTTP-DGRAM</a>]</span>), which a server can send on an HTTP Data Stream, to
+inform a client that it intends to close the stream.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
+<p id="section-1.2-3">An HTTP proxy can send a WRAP_UP capsule to instruct a client that it should
 not start new requests on a tunneled connection, while still allowing it to
-finish existing requests.<a href="#section-1-7" class="pilcrow">¶</a></p>
+finish existing requests.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 <div id="conventions-and-definitions">
-<section id="section-1.1">
+<section id="section-1.3">
         <h3 id="name-conventions-and-definitions">
-<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+<a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
         </h3>
-<p id="section-1.1-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+<p id="section-1.3-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
 "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
 described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
-appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
-<p id="section-1.1-2">This document uses the terms "connection", "client", and "server" from
+appear in all capitals, as shown here.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<p id="section-1.3-2">This document uses the terms "connection", "client", and "server" from
 <span><a href="https://rfc-editor.org/rfc/rfc9110#section-3.3" class="relref">Section 3.3</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span> and the terms "intermediary", "proxy", and "gateway"
-from <span><a href="https://rfc-editor.org/rfc/rfc9110#section-3.7" class="relref">Section 3.7</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
+from <span><a href="https://rfc-editor.org/rfc/rfc9110#section-3.7" class="relref">Section 3.7</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>.<a href="#section-1.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1526,9 +1590,9 @@ requests were handled by the origin or not.<a href="#section-3-1" class="pilcrow
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
-<dt id="CONNECT-UDP">[CONNECT-UDP]</dt>
+<dt id="H1">[HTTP/1.1]</dt>
         <dd>
-<span class="refAuthor">Schinazi, D.</span>, <span class="refTitle">"Proxying UDP in HTTP"</span>, <span class="seriesInfo">RFC 9298</span>, <span class="seriesInfo">DOI 10.17487/RFC9298</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9298">https://www.rfc-editor.org/rfc/rfc9298</a>&gt;</span>. </dd>
+<span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP/1.1"</span>, <span class="seriesInfo">STD 99</span>, <span class="seriesInfo">RFC 9112</span>, <span class="seriesInfo">DOI 10.17487/RFC9112</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9112">https://www.rfc-editor.org/rfc/rfc9112</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="H2">[HTTP/2]</dt>
         <dd>
@@ -1537,6 +1601,10 @@ requests were handled by the origin or not.<a href="#section-3-1" class="pilcrow
 <dt id="H3">[HTTP/3]</dt>
         <dd>
 <span class="refAuthor">Bishop, M., Ed.</span>, <span class="refTitle">"HTTP/3"</span>, <span class="seriesInfo">RFC 9114</span>, <span class="seriesInfo">DOI 10.17487/RFC9114</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9114">https://www.rfc-editor.org/rfc/rfc9114</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WEBSOCKET">[WEBSOCKET]</dt>
+        <dd>
+<span class="refAuthor">Fette, I.</span> and <span class="refAuthor">A. Melnikov</span>, <span class="refTitle">"The WebSocket Protocol"</span>, <span class="seriesInfo">RFC 6455</span>, <span class="seriesInfo">DOI 10.17487/RFC6455</span>, <time datetime="2011-12" class="refDate">December 2011</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6455">https://www.rfc-editor.org/rfc/rfc6455</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="WEBTRANSPORT">[WEBTRANSPORT]</dt>
       <dd>
