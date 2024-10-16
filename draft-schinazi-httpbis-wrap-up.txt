@@ -4,8 +4,9 @@
 
 HTTPBIS                                                      D. Schinazi
 Internet-Draft                                                Google LLC
-Intended status: Standards Track                             5 July 2024
-Expires: 6 January 2025
+Intended status: Standards Track                               L. Pardue
+Expires: 19 April 2025                                        Cloudflare
+                                                         16 October 2024
 
 
                         The HTTP Wrap Up Capsule
@@ -59,7 +60,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 6 January 2025.
+   This Internet-Draft will expire on 19 April 2025.
 
 Copyright Notice
 
@@ -89,7 +90,7 @@ Table of Contents
      5.1.  Normative References
      5.2.  Informative References
    Acknowledgments
-   Author's Address
+   Authors' Addresses
 
 1.  Introduction
 
@@ -288,15 +289,15 @@ Table of Contents
    [WEBTRANSPORT]
               Frindell, A., Kinnear, E., and V. Vasiliev, "WebTransport
               over HTTP/3", Work in Progress, Internet-Draft, draft-
-              ietf-webtrans-http3-09, 4 March 2024,
+              ietf-webtrans-http3-10, 25 August 2024,
               <https://datatracker.ietf.org/doc/html/draft-ietf-
-              webtrans-http3-09>.
+              webtrans-http3-10>.
 
 Acknowledgments
 
    This mechanism was inspired by the GOAWAY frame from HTTP/2.
 
-Author's Address
+Authors' Addresses
 
    David Schinazi
    Google LLC
@@ -304,3 +305,8 @@ Author's Address
    Mountain View, CA 94043
    United States of America
    Email: dschinazi.ietf@gmail.com
+
+
+   Lucas Pardue
+   Cloudflare
+   Email: lucas@lucaspardue.com
