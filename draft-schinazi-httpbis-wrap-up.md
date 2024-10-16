@@ -66,10 +66,10 @@ on a tunneled connection, while still allowing it to finish existing requests.
 
 # Introduction
 
-{{H1}}, {{H2}} and {{H3}} all have the notion persistent connections, where a
+{{H1}}, {{H2}} and {{H3}} all have the notion of persistent connections, where a
 single connection can carry multiple request and response messages.
 While it is expected that the connection persists, there are situations where
-a client or server may want to terminate the connection gracefully.
+a client or server may wish to terminate the connection gracefully.
 
 An HTTP/1.1 connection can be terminated by using a Connection header field with
 the close option; see {{Section 9.6 of H1}}. When a connection has short-lived
@@ -88,7 +88,7 @@ the connection, supporting cases such as scheduled maintenance. Active
 requests/responses can continue to run, while new requests need to be sent on a
 new HTTP connection. Endpoints that use GOAWAY typically have a grace period in
 which requests/responses can run naturally to completion. If they run longer
-than the grace period, the are abruptly terminated when the the transport layer
+than the grace period, they are abruptly terminated when the the transport layer
 is closed or reset, which is potentially disruptive and can lead to truncated
 content.
 
@@ -126,7 +126,7 @@ origin HTTP/1.1 connection pool. If any single origin connection indicates an
 intent to close, it doesn't make sense for the gateway to issue a GOAWAY to the
 client, or to respond to a client GOAWAY by closing connections in the pool.
 
-Long-lived requests pose a problem for maintenance, especially for HTP/2 and
+Long-lived requests pose a problem for maintenance, especially for HTTP/2 and
 HTTP/3, and even more so for intermediaries. Sometimes they need to terminate
 individual request streams in order to facilitate load balancing or impose data
 limits, while leaving the connection still active. GOAWAY is not suitable for
@@ -134,7 +134,7 @@ this task.
 
 Some applications using HTTP have their own control plane running over HTTP,
 that could be used for a graceful termination. For example, WebSockets has
-separate control and data frames. The Close frame ({{Section 5.5.1 of ?RFC6455}})
+separate control and data frames. The Close frame ({{Section 5.5.1 of ?WEBSOCKET=RFC6455}})
 is used for the WebSocket close sequence. However, in the maintenance scenario,
 an intermediary that is not WebSocket aware cannot use the formal sequence. Nor
 is there any standard for it to signal to the endpoints to initiate that
@@ -144,8 +144,8 @@ working effectively in real deployments, since the intermediary is a generic
 proxy that may invalidate endpoint expectations.
 
 Many long-lived HTTP request types do not have control messages that could
-signal an intent to terminate the request. For example, see CONNECT {{Section
-9.3.6 of HTTP}}) or connect-udp (see {{?CONNECT-UDP=RFC9298}}). In these models,
+signal an intent to terminate the request. For example, see CONNECT ({{Section
+9.3.6 of HTTP}}) or connect-udp ({?CONNECT-UDP=RFC9298}}). In these models,
 the client requests that a proxy create a tunnel to a target origin. On success,
 the newly established tunnel is used as the underlying transport to then
 establish a second HTTP connection directly to the origin. In that situation,
