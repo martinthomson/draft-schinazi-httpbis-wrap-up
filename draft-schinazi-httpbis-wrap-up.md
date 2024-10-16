@@ -104,7 +104,7 @@ improvements. Deployments of intermediaries also need to be maintained, which
 can sometimes require taking intermediaries temporarily offline. For example,
 if a gateway has a client HTTP/2 connection and needs to go down for
 maintenance, it can send a GOAWAY to stop the client issuing requests that
-would be forward to the origin.
+would be forwarded to the origin.
 
 ~~~ aasvg
 +--------+      +---------+      +--------+
