@@ -70,41 +70,41 @@ on a tunneled connection, while still allowing it to finish existing requests.
 
 # Introduction
 
-{{H1}}, {{H2}} and {{H3}} all have the notion of persistent connections, where a
-single connection can carry multiple request and response messages.
-While it is expected that the connection persists, there are situations where
-a client or server may wish to terminate the connection gracefully.
+{{H1}}, {{H2}} and {{H3}} all have the notion of persistent connections, where
+a single connection can carry multiple request and response messages. While it
+is expected that the connection persists, there are situations where a client
+or server may wish to terminate the connection gracefully.
 
-An HTTP/1.1 connection can be terminated by using a Connection header field with
-the close option; see {{Section 9.6 of H1}}. When a connection has short-lived
-requests/responses, this mechanism allows timely and non-disruptive connection
-termination. However, when requests/responses are longer lived, the opportunity
-to use headers happens less frequently (or not at all). There is no way for
-client or server to signal a future intent to terminate the connection. Instead,
-an abrupt termination, realized via a transport-layer close or reset, is
-required, which is potentially disruptive and can lead to truncated content.
+An HTTP/1.1 connection can be terminated by using a Connection header field
+with the close option; see {{Section 9.6 of H1}}. When a connection has
+short-lived requests/responses, this mechanism allows timely and non-disruptive
+connection termination. However, when requests/responses are longer lived, the
+opportunity to use headers happens less frequently (or not at all). There is no
+way for client or server to signal a future intent to terminate the connection.
+Instead, an abrupt termination, realized via a transport-layer close or reset,
+is required, which is potentially disruptive and can lead to truncated content.
 
 HTTP/2 and HTTP/3 support request multiplexing, making header-based connection
 lifecycle control impractical. Connection headers are prohibited entirely.
-Instead, a shutdown process using the GOAWAY frame is defined (see {{Section 6.8
-of H2}} and {{Section 5.2 of H3}}). GOAWAY signals a future intent to terminate
-the connection, supporting cases such as scheduled maintenance. Active
-requests/responses can continue to run, while new requests need to be sent on a
-new HTTP connection. Endpoints that use GOAWAY typically have a grace period in
-which requests/responses can run naturally to completion. If they run longer
-than the grace period, they are abruptly terminated when the the transport layer
-is closed or reset, which is potentially disruptive and can lead to truncated
-content.
+Instead, a shutdown process using the GOAWAY frame is defined (see {{Section
+6.8 of H2}} and {{Section 5.2 of H3}}). GOAWAY signals a future intent to
+terminate the connection, supporting cases such as scheduled maintenance.
+Active requests/responses can continue to run, while new requests need to be
+sent on a new HTTP connection. Endpoints that use GOAWAY typically have a grace
+period in which requests/responses can run naturally to completion. If they run
+longer than the grace period, they are abruptly terminated when the the
+transport layer is closed or reset, which is potentially disruptive and can
+lead to truncated content.
 
 ## The Need for a Request Termination Intent Signal
 
 Intermediaries (see {{Section 3.7 of !HTTP=RFC9110}}) can provide a variety of
 benefits to HTTP systems, such as load balancing, caching, and privacy
 improvements. Deployments of intermediaries also need to be maintained, which
-can sometimes require taking intermediaries temporarily offline. For example, if
-a gateway has a client HTTP/2 connection and needs to go down for maintenance,
-it can send a GOAWAY to stop the client issuing requests that would be forward
-to the origin.
+can sometimes require taking intermediaries temporarily offline. For example,
+if a gateway has a client HTTP/2 connection and needs to go down for
+maintenance, it can send a GOAWAY to stop the client issuing requests that
+would be forward to the origin.
 
 ~~~ aasvg
 +--------+      +---------+      +--------+
@@ -121,14 +121,15 @@ to the origin.
 ~~~
 {: #diagram-gateway title="Gateway Sends GOAWAY"}
 
-The connection close details described above apply to an intermediary's upstream
-and downstream connections. Since a proxy can do request aggregation or fan out,
-there is no guarantee of a 1:1 ratio of upstream/downstream. As such, the
-lifetimes of these connections are not coupled tightly. For example, a gateway
-can terminate a client HTTP/2 connections and map individual requests to an
-origin HTTP/1.1 connection pool. If any single origin connection indicates an
-intent to close, it doesn't make sense for the gateway to issue a GOAWAY to the
-client, or to respond to a client GOAWAY by closing connections in the pool.
+The connection close details described above apply to an intermediary's
+upstream and downstream connections. Since a proxy can do request aggregation
+or fan out, there is no guarantee of a 1:1 ratio of upstream/downstream. As
+such, the lifetimes of these connections are not coupled tightly. For example,
+a gateway can terminate a client HTTP/2 connections and map individual requests
+to an origin HTTP/1.1 connection pool. If any single origin connection
+indicates an intent to close, it doesn't make sense for the gateway to issue a
+GOAWAY to the client, or to respond to a client GOAWAY by closing connections
+in the pool.
 
 Long-lived requests pose a problem for maintenance, especially for HTTP/2 and
 HTTP/3, and even more so for intermediaries. Sometimes they need to terminate
@@ -138,19 +139,19 @@ this task.
 
 Some applications using HTTP have their own control plane running over HTTP,
 that could be used for a graceful termination. For example, WebSockets has
-separate control and data frames. The Close frame ({{Section 5.5.1 of ?WEBSOCKET=RFC6455}})
-is used for the WebSocket close sequence. However, in the maintenance scenario,
-an intermediary that is not WebSocket aware cannot use the formal sequence. Nor
-is there any standard for it to signal to the endpoints to initiate that
-sequence. Some intermediaries are WebSocket aware, and in theory could send
-Close frames. However, there can be other considerations that prevent this
-working effectively in real deployments, since the intermediary is a generic
-proxy that may invalidate endpoint expectations.
+separate control and data frames. The Close frame ({{Section 5.5.1 of
+?WEBSOCKET=RFC6455}}) is used for the WebSocket close sequence. However, in the
+maintenance scenario, an intermediary that is not WebSocket aware cannot use
+the formal sequence. Nor is there any standard for it to signal to the
+endpoints to initiate that sequence. Some intermediaries are WebSocket aware,
+and in theory could send Close frames. However, there can be other
+considerations that prevent this working effectively in real deployments, since
+the intermediary is a generic proxy that may invalidate endpoint expectations.
 
 Many long-lived HTTP request types do not have control messages that could
 signal an intent to terminate the request. For example, see CONNECT ({{Section
-9.3.6 of HTTP}}) or connect-udp ({?CONNECT-UDP=RFC9298}}). In these models,
-the client requests that a proxy create a tunnel to a target origin. On success,
+9.3.6 of HTTP}}) or connect-udp ({?CONNECT-UDP=RFC9298}}). In these models, the
+client requests that a proxy create a tunnel to a target origin. On success,
 the newly established tunnel is used as the underlying transport to then
 establish a second HTTP connection directly to the origin. In that situation,
 the proxy cannot inspect the contents of the tunnel, nor inject any data into
@@ -164,8 +165,8 @@ request was acted on.
 
 To avoid user-visible failures, it is best for the proxy to inform the client
 of upcoming request stream terminations in advance of the actual termination.
-This allows the client to wrap up existing operations related to that stream and
-start sending new work to a different stream or connection.
+This allows the client to wrap up existing operations related to that stream
+and start sending new work to a different stream or connection.
 
 ## The WRAP_UP Capsule
 
