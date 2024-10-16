@@ -238,11 +238,9 @@ send the WRAP_UP capsule with a non-zero Capsule Length. If an endpoint
 receives a WRAP_UP capsule with a non-zero Capsule Length, it MUST abort the
 corresponding request stream. Proxies MUST NOT send more than one WRAP_UP
 capsule on a given stream. If a client receives a second WRAP_UP capsule on a
-given request stream, it MUST abort the stream.
-
-Endpoints that abort the request stream due to an unexpected or malformed
-WRAP_UP capsule received over HTTP/3 SHOULD use the H3_DATAGRAM_ERROR error
-code when aborting the stream.
+given request stream, it MUST abort the stream. Endpoints that abort the
+request stream due to an unexpected or malformed WRAP_UP capsule MUST follow
+the error-handling procedure defined in {{Section 3.3 of HTTP-DGRAM}}.
 
 # Security Considerations
 
